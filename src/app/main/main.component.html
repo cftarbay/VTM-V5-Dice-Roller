@@ -1,0 +1,141 @@
+<div class='container border rounded-lg'>
+
+    <!--user input fields and title-->
+    <div class='container'>
+
+        <h2>Vampire: The Masquerade Fifth Edition Online Dice Roller</h2>
+
+        <!--input for full dice pool-->
+        <div class='input-group'>
+            <div class="input-group-prepend">
+                <span class="input-group-text">Dice Pool</span>
+            </div>
+            <input type='number' min='1' max='20' class='form-control' id='normal-dice' aria-label='Dice Pool'
+                style='max-width: 80px;' [(ngModel)]='dice'>
+        </div>
+
+        <!--error if less than one die indicated in pool-->
+        <div *ngIf='tooFewDiceFlag' class='alert alert-danger'>
+            <span>You must roll at least one die</span>
+        </div>
+
+        <!--input for current number of hunger dice-->
+        <div class='input-group'>
+            <div class="input-group-prepend">
+                <span class="input-group-text red">Hunger</span>
+            </div>
+            <input type='number' min='0' max='5' class='form-control' id='hunger-dice' style='max-width: 80px;'
+                [(ngModel)]='hunger'>
+        </div>
+
+        <!--error if less than zero hunger indicated-->
+        <div *ngIf='tooFewHungerFlag' class='alert alert-danger'>
+            <span>You must have at least zero hunger</span>
+        </div>
+        <!--error if more than 5 hunger indicated-->
+        <div *ngIf='tooManyHungerFlag' class='alert alert-danger'>
+            <span>You can only have a maximum of five hunger</span>
+        </div>
+
+        <!--input for current difficulty, if known (can be left blank)-->
+        <div class='input-group' style='margin-bottom: 0px;'>
+            <div class="input-group-prepend">
+                <span class="input-group-text">Difficulty</span>
+            </div>
+            <input type='number' min='1' max='20' class='form-control' id='difficulty-input' style='max-width: 80px;'
+                [(ngModel)]='difficulty'>
+        </div>
+        <small class='form-text text-muted' style='margin-bottom: 10px; margin-top:0px;'>
+            Leave blank if difficulty is unknown
+        </small>
+
+        <!--error if difficulty less than 1 indicated-->
+        <div *ngIf='difficultyTooLowFlag' class='alert alert-danger'>
+            <span>Difficulty must be at least 1</span>
+        </div>
+
+        <!--button to begin a fresh roll using input values-->
+        <button (click)='validate()' type='button' class='btn btn-dark btn-lg'>Roll</button>
+    </div>
+
+    <!--results div-->
+    <div class='container' *ngIf='rolledFlag'>
+        <hr>
+        <!--if a difficulty is specified, we can tell whether the roll failed or succeeded-->
+        <div *ngIf='difficultySetFlag'>
+            <!--show success/fail/bestial/messy status-->
+            <h3>{{result}}</h3>
+            <!--indicator for 1 success-->
+            <div *ngIf='successes===1'>
+                <h4>{{successes}} success</h4>
+            </div>
+            <!--indicator for 0 or more than one successes-->
+            <div *ngIf='successes>-1 && successes!==1'>
+                <h4>{{successes}} successes<!--, margin {{successes-difficultyWhenRolled}}--></h4>
+            </div>
+        </div>
+
+        <!--if no difficulty set, show number of successes and possible messy/bestial-->
+        <div *ngIf='!difficultySetFlag'>
+            <!--indicator for 1 success-->
+            <div *ngIf='successes===1'>
+                <h3>{{successes}} success</h3>
+            </div>
+            <!--indicator for 0 or more than one successes-->
+            <div *ngIf='successes>-1 && successes!==1'>
+                <h3>{{successes}} successes</h3>
+            </div>
+            <!--indicator for potential messy crit when succeed/fail of roll is not known-->
+            <div id='messy' *ngIf='messyFlag'>
+                <h4>Possible messy crit</h4>
+            </div>
+            <!--indicator for potential bestial fail when succeed/fail of roll is not known-->
+            <div id='bestial' *ngIf='bestialFlag && !definiteBestialFlag'>
+                <h4>Possible bestial failure</h4>
+            </div>
+            <!--indicator for definite bestial fail when there are no successes and at least one skull result-->
+            <div id='bestial' *ngIf='definiteBestialFlag'>
+                <h4>Bestial failure</h4>
+            </div>
+        </div>
+
+        <!--result images-->
+        <div class='row' style='margin-bottom: 10px;'>
+            <!--hunger dice outcome images-->
+            <div *ngIf='redImages.length>0' class='col-12 col-sm-6'>
+                <img *ngFor='let img of redImages' src='{{img}}'>
+            </div>
+            <!--normal dice outcome images-->
+            <div *ngIf='normalImages.length>0 && !this.currentlyRerollingFlag' class='col-12 col-sm-6'>
+                <img *ngFor='let img of normalImages' src='{{img}}'>
+            </div>
+            <!--clickable normal dice outcome images to select for rerolling-->
+            <div *ngIf='normalImages.length>0 && this.currentlyRerollingFlag' class='col-12 col-sm-6'>
+                <button *ngFor='let img of normalImages; let i=index' (click)="checkForReroll(i)"
+                    [ngClass]="{'selected-die': rerollList[i]}" class='btn btn-outline-secondary'>
+                    <img src='{{img}}'>
+                </button>
+
+                <!--error if user tries to select more than 3 dice to reroll-->
+                <div *ngIf='tooManyRerollFlag' class='alert alert-danger'>
+                    <span>You may only reroll up to 3 dice</span>
+                </div>
+                <!--error if user tries to submit reroll with no dice selected-->
+                <div *ngIf='noRerollCheckedFlag' class='alert alert-danger'>
+                    <span>Select up to 3 normal dice to reroll</span>
+                </div>
+
+                <!--button to finalize and initiate reroll-->
+                <div>
+                    <button type='button' class='btn btn-dark btn-lg' (click)='confirmReroll()'>Reroll</button>
+                </div>
+            </div>
+        </div>
+
+        <!--button to allow user to enter a mode to select up to 3 normal dice to reroll-->
+        <button *ngIf='normalDice.length>0 && !currentlyRerollingFlag && !alreadyRerolledFlag' type='button'
+            class='btn btn-dark btn-lg' (click)='willpowerReroll()'>
+            Willpower Reroll
+        </button>
+    </div>
+</div>

@@ -1,0 +1,42 @@
+#messy,#bestial{
+    color: red;
+}
+
+.alert{
+    max-width: 320px;
+}
+
+.input-group{
+    width: 170px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.input-group-prepend .input-group-text{
+    width: 92px;
+}
+
+.input-group-text.red{
+    color: #831515;
+}
+
+.btn{
+    margin-bottom: 10px;
+}
+
+hr{
+    margin-top: 10px;
+}
+
+.col-sm-6{
+    padding: 0px;
+}
+
+.selected-die{
+    background-color: #831515;
+}
+
+h2{
+    margin-top: 10px;
+    margin-bottom: 16px;
+}
